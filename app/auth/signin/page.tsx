@@ -1,9 +1,27 @@
+"use client";
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
+import authStore from "@/stores/auth";
+import { handleChange } from "@/helpers/formHandlers";
+import { AuthService } from "@/services/auth";
+import { observer } from "mobx-react-lite";
 
 const SignIn: React.FC = () => {
+
+
+  const handleLogin = async(e:React.FormEvent) =>{
+    e.preventDefault();
+    try {
+      const body = { email: authStore.email, password: authStore.password }
+      await AuthService.login(body)
+    } catch (error) {
+      toast.error(err.response.data.message)
+
+    }
+
+  }
   return (
     <>
       <Breadcrumb pageName="Sign In" />
@@ -176,6 +194,10 @@ const SignIn: React.FC = () => {
                       type="email"
                       placeholder="Enter your email"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                      name="email"
+                      value={authStore.email}
+                      onChange={(e) => handleChange(authStore, e)}
+                    
                     />
 
                     <span className="absolute right-4 top-4">
@@ -200,13 +222,16 @@ const SignIn: React.FC = () => {
 
                 <div className="mb-6">
                   <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Re-type Password
+                     Password
                   </label>
                   <div className="relative">
                     <input
                       type="password"
                       placeholder="6+ Characters, 1 Capital letter"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                      name="password"
+                      value={authStore.password}
+                      onChange={(e) => handleChange(authStore, e)}
                     />
 
                     <span className="absolute right-4 top-4">
@@ -234,11 +259,13 @@ const SignIn: React.FC = () => {
                 </div>
 
                 <div className="mb-5">
-                  <input
-                    type="submit"
-                    value="Sign In"
+                  <button
+                    onClick={handleLogin}
                     className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
-                  />
+                  
+                  >
+                    Sign In
+                  </button>  
                 </div>
 
                 <button className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50">
@@ -295,4 +322,4 @@ const SignIn: React.FC = () => {
   );
 };
 
-export default SignIn;
+export default observer(SignIn);

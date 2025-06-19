@@ -2,7 +2,7 @@ import { interceptorRequest, interceptorResponse } from '@/helpers/interceptors'
 import axios, { AxiosInstance } from 'axios';
 
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000/api/',
   withCredentials: true,
   headers: {
     'Accept': 'application/json',
