@@ -1,28 +1,44 @@
-"use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { departmentStore } from '@/stores/departmentStore';
+import { categoryStore } from '@/stores/categoryStore';
 import DepartmentFormModal from './DepartmentFormModal';
+import CategoryFormModal from './CategoryFormModal';
 import { DepartmentTableProps, Department } from "@/types/department";
+import { Category } from "@/types/category";
 
 const DepartmentTable = observer(({ departments }: DepartmentTableProps) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  // Department modal state
+  const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
+  const [deptModalMode, setDeptModalMode] = useState<'create' | 'edit'>('create');
   const [selectedDepartment, setSelectedDepartment] = useState<Department | undefined>();
 
-  const handleCreateClick = () => {
-    setModalMode('create');
+  // Category modal state
+  const [isCatModalOpen, setIsCatModalOpen] = useState(false);
+  const [catModalMode, setCatModalMode] = useState<'create' | 'edit'>('create');
+  const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
+
+  // Expanded departments state
+  const [expandedDepartments, setExpandedDepartments] = useState<Set<string | number>>(new Set());
+
+  const { categories } = categoryStore;
+
+
+
+  // Department handlers
+  const handleCreateDepartment = () => {
+    setDeptModalMode('create');
     setSelectedDepartment(undefined);
-    setIsModalOpen(true);
+    setIsDeptModalOpen(true);
   };
 
-  const handleEditClick = (department: Department) => {
-    setModalMode('edit');
+  const handleEditDepartment = (department: Department) => {
+    setDeptModalMode('edit');
     setSelectedDepartment(department);
-    setIsModalOpen(true);
+    setIsDeptModalOpen(true);
   };
 
-  const handleDeleteClick = async (department: Department) => {
+  const handleDeleteDepartment = async (department: Department) => {
     if (window.confirm(`Are you sure you want to delete "${department.name}"?`)) {
       try {
         await departmentStore.deleteDepartment(department.id);
@@ -32,45 +48,90 @@ const DepartmentTable = observer(({ departments }: DepartmentTableProps) => {
     }
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedDepartment(undefined);
+  // Category handlers
+  const handleCreateCategory = (departmentId?: string | number) => {
+    setCatModalMode('create');
+    setSelectedCategory(undefined);
+    if (departmentId) {
+      categoryStore.setFormData('department_id', departmentId);
+    }
+    setIsCatModalOpen(true);
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setCatModalMode('edit');
+    setSelectedCategory(category);
+    setIsCatModalOpen(true);
+  };
+
+  const handleDeleteCategory = async (category: Category) => {
+    if (window.confirm(`Are you sure you want to delete "${category.name}"?`)) {
+      try {
+        await categoryStore.deleteCategory(category.id);
+      } catch (error) {
+        // Error handling is done in the store
+      }
+    }
+  };
+
+  // Toggle department expansion
+  const toggleDepartment = (departmentId: string | number) => {
+    const newExpanded = new Set(expandedDepartments);
+    if (newExpanded.has(departmentId)) {
+      newExpanded.delete(departmentId);
+    } else {
+      newExpanded.add(departmentId);
+    }
+    setExpandedDepartments(newExpanded);
+  };
+
+  // Get categories for a specific department
+  const getCategoriesForDepartment = (departmentId: string | number) => {
+    return categories?.filter(cat => cat.department_id === departmentId);
   };
 
   return (
     <>
       <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
-        {/* Header with Create Button */}
+        {/* Header with Create Buttons */}
         <div className="flex justify-between items-center mb-6">
           <h4 className="text-xl font-semibold text-black dark:text-white">
-            Department Management
+            Department & Category Management
           </h4>
-          <button
-            onClick={handleCreateClick}
-            className="inline-flex items-center justify-center rounded-md bg-primary py-2 px-4 text-center font-medium text-white hover:bg-opacity-90 lg:px-6 xl:px-8"
-          >
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
+          <div className="flex space-x-3">
+            <button
+              onClick={handleCreateDepartment}
+              className="inline-flex items-center justify-center rounded-md bg-primary py-2 px-4 text-center font-medium text-white hover:bg-opacity-90"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Create Department
-          </button>
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Create Department
+            </button>
+            <button
+              onClick={() => handleCreateCategory()}
+              className="inline-flex items-center justify-center rounded-md bg-green-600 py-2 px-4 text-center font-medium text-white hover:bg-opacity-90"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+              Create Category
+            </button>
+          </div>
         </div>
 
         <div className="max-w-full overflow-x-auto">
           <table className="w-full table-auto">
             <thead>
               <tr className="bg-gray-2 text-left dark:bg-meta-4">
-                <th className="min-w-[220px] py-4 px-4 font-medium text-black dark:text-white xl:pl-11">
-                  Department Name
+                <th className="min-w-[250px] py-4 px-4 font-medium text-black dark:text-white xl:pl-11">
+                  Name
                 </th>
                 <th className="min-w-[150px] py-4 px-4 font-medium text-black dark:text-white">
                   Slug
+                </th>
+                <th className="min-w-[100px] py-4 px-4 font-medium text-black dark:text-white">
+                  Type
                 </th>
                 <th className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white">
                   Status
@@ -82,141 +143,172 @@ const DepartmentTable = observer(({ departments }: DepartmentTableProps) => {
             </thead>
             <tbody>
               {departments.length > 0 ? (
-                departments.map((department, key) => (
-                  <tr key={department?.id || key}>
-                    <td className="border-b border-[#eee] py-5 px-4 pl-9 dark:border-strokedark xl:pl-11">
-                      <h5 className="font-medium text-black dark:text-white">
-                        {department?.name}
-                      </h5>
-                      <p className="text-sm">{department?.meta_title || 'No meta title'}</p>
-                    </td>
-                    <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
-                      <p className="text-black dark:text-white">{department?.slug}</p>
-                    </td>
-                    <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
-                      <p
-                        className={`inline-flex rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium ${
-                          department?.active === 1
-                            ? "text-success bg-success"
-                            : "text-danger bg-danger"
-                        }`}
-                      >
-                        {department?.active === 1 ? "Active" : "Inactive"}
-                      </p>
-                    </td>
-                    <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
-                      <div className="flex items-center space-x-3.5">
-                        {/* View Button */}
-                        <button 
-                          className="hover:text-primary"
-                          title="View Department"
-                        >
-                          <svg
-                            className="fill-current"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 18 18"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
+                departments.map((department) => {
+                  const departmentCategories = getCategoriesForDepartment(department.id);
+                  const isExpanded = expandedDepartments.has(department.id);
+                  
+                  return (
+                    <React.Fragment key={department.id}>
+                      {/* Department Row */}
+                      <tr className="bg-gray-50 dark:bg-gray-800">
+                        <td className="border-b border-[#eee] py-5 px-4 pl-9 dark:border-strokedark xl:pl-11">
+                          <div className="flex items-center">
+                            <button
+                              onClick={() => toggleDepartment(department.id)}
+                              className="mr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                            >
+                              <svg
+                                className={`w-4 h-4 transform transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                            <div>
+                              <h5 className="font-medium text-black dark:text-white">
+                                {department.name}
+                              </h5>
+                              <p className="text-sm text-gray-500">{department.meta_title || 'No meta title'}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                          <p className="text-black dark:text-white">{department.slug}</p>
+                        </td>
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                          <span className="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            Department
+                          </span>
+                        </td>
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                          <p
+                            className={`inline-flex rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium ${
+                              department.active === 1
+                                ? "text-success bg-success"
+                                : "text-danger bg-danger"
+                            }`}
                           >
-                            <path
-                              d="M8.99981 14.8219C3.43106 14.8219 0.674805 9.50624 0.562305 9.28124C0.47793 9.11249 0.47793 8.88749 0.562305 8.71874C0.674805 8.49374 3.43106 3.20624 8.99981 3.20624C14.5686 3.20624 17.3248 8.49374 17.4373 8.71874C17.5217 8.88749 17.5217 9.11249 17.4373 9.28124C17.3248 9.50624 14.5686 14.8219 8.99981 14.8219ZM1.85605 8.99999C2.4748 10.0406 4.89356 13.5562 8.99981 13.5562C13.1061 13.5562 15.5248 10.0406 16.1436 8.99999C15.5248 7.95936 13.1061 4.44374 8.99981 4.44374C4.89356 4.44374 2.4748 7.95936 1.85605 8.99999Z"
-                              fill=""
-                            />
-                            <path
-                              d="M9 11.3906C7.67812 11.3906 6.60938 10.3219 6.60938 9C6.60938 7.67813 7.67812 6.60938 9 6.60938C10.3219 6.60938 11.3906 7.67813 11.3906 9C11.3906 10.3219 10.3219 11.3906 9 11.3906ZM9 7.875C8.38125 7.875 7.875 8.38125 7.875 9C7.875 9.61875 8.38125 10.125 9 10.125C9.61875 10.125 10.125 9.61875 10.125 9C10.125 8.38125 9.61875 7.875 9 7.875Z"
-                              fill=""
-                            />
-                          </svg>
-                        </button>
+                            {department.active === 1 ? "Active" : "Inactive"}
+                          </p>
+                        </td>
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                          <div className="flex items-center space-x-3.5">
+                            <button 
+                              className="hover:text-primary"
+                              onClick={() => handleCreateCategory(department.id)}
+                              title="Add Category"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                              </svg>
+                            </button>
+                            <button 
+                              className="hover:text-primary"
+                              onClick={() => handleEditDepartment(department)}
+                              title="Edit Department"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            <button 
+                              className="hover:text-danger"
+                              onClick={() => handleDeleteDepartment(department)}
+                              title="Delete Department"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
 
-                        {/* Edit Button */}
-                        <button 
-                          className="hover:text-primary"
-                          onClick={() => handleEditClick(department)}
-                          title="Edit Department"
-                        >
-                          <svg
-                            className="fill-current"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 18 18"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M8.99981 14.8219C3.43106 14.8219 0.674805 9.50624 0.562305 9.28124C0.47793 9.11249 0.47793 8.88749 0.562305 8.71874C0.674805 8.49374 3.43106 3.20624 8.99981 3.20624C14.5686 3.20624 17.3248 8.49374 17.4373 8.71874C17.5217 8.88749 17.5217 9.11249 17.4373 9.28124C17.3248 9.50624 14.5686 14.8219 8.99981 14.8219ZM1.85605 8.99999C2.4748 10.0406 4.89356 13.5562 8.99981 13.5562C13.1061 13.5562 15.5248 10.0406 16.1436 8.99999C15.5248 7.95936 13.1061 4.44374 8.99981 4.44374C4.89356 4.44374 2.4748 7.95936 1.85605 8.99999Z"
-                              fill=""
-                            />
-                            <path
-                              d="M1 13.5L3.75 13.5L13.81 3.44C14.2 3.05 14.2 2.42 13.81 2.03L13.47 1.69C13.08 1.3 12.45 1.3 12.06 1.69L2 11.75L2 14.5C2 15.05 2.45 15.5 3 15.5L13.5 15.5"
-                            />
-                          </svg>
-                        </button>
+                      {/* Categories Rows */}
+                      {isExpanded && departmentCategories?.map((category) => (
+                        <tr key={`cat-${category.id}`} className="bg-gray-25 dark:bg-gray-750">
+                          <td className="border-b border-[#eee] py-4 px-4 pl-16 dark:border-strokedark xl:pl-20">
+                            <div className="flex items-center">
+                              <div className="w-4 h-4 mr-3 flex-shrink-0">
+                                <svg className="w-full h-full text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                              <div>
+                                <h6 className="font-medium text-black dark:text-white">
+                                  {category.name}
+                                </h6>
+                                <p className="text-sm text-gray-500">{category.meta_title || 'No meta title'}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="border-b border-[#eee] py-4 px-4 dark:border-strokedark">
+                            <p className="text-black dark:text-white">{category.slug}</p>
+                          </td>
+                          <td className="border-b border-[#eee] py-4 px-4 dark:border-strokedark">
+                            <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
+                              Category
+                            </span>
+                          </td>
+                          <td className="border-b border-[#eee] py-4 px-4 dark:border-strokedark">
+                            <p
+                              className={`inline-flex rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium ${
+                                category.active === 1
+                                  ? "text-success bg-success"
+                                  : "text-danger bg-danger"
+                              }`}
+                            >
+                              {category.active === 1 ? "Active" : "Inactive"}
+                            </p>
+                          </td>
+                          <td className="border-b border-[#eee] py-4 px-4 dark:border-strokedark">
+                            <div className="flex items-center space-x-3.5">
+                              <button 
+                                className="hover:text-primary"
+                                onClick={() => handleEditCategory(category)}
+                                title="Edit Category"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </button>
+                              <button 
+                                className="hover:text-danger"
+                                onClick={() => handleDeleteCategory(category)}
+                                title="Delete Category"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
 
-                        {/* Delete Button */}
-                        <button 
-                          className="hover:text-danger"
-                          onClick={() => handleDeleteClick(department)}
-                          title="Delete Department"
-                        >
-                          <svg
-                            className="fill-current"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 18 18"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M13.7535 2.47502H11.5879V1.9969C11.5879 1.15315 10.9129 0.478149 10.0691 0.478149H7.90352C7.05977 0.478149 6.38477 1.15315 6.38477 1.9969V2.47502H4.21914C3.40352 2.47502 2.72852 3.15002 2.72852 3.96565V4.8094C2.72852 5.42815 3.09414 5.9344 3.62852 6.1594L4.07852 15.4688C4.13477 16.6219 5.09102 17.5219 6.24414 17.5219H11.7004C12.8535 17.5219 13.8098 16.6219 13.866 15.4688L14.3441 6.13127C14.8785 5.90627 15.2441 5.3719 15.2441 4.78127V3.93752C15.2441 3.15002 14.5691 2.47502 13.7535 2.47502ZM7.67852 1.9969C7.67852 1.85627 7.79102 1.74377 7.93164 1.74377H10.0973C10.2379 1.74377 10.3504 1.85627 10.3504 1.9969V2.47502H7.70664V1.9969H7.67852ZM4.02227 3.96565C4.02227 3.85315 4.10664 3.74065 4.24727 3.74065H13.7535C13.866 3.74065 13.9785 3.82502 13.9785 3.96565V4.8094C13.9785 4.9219 13.8941 5.0344 13.7535 5.0344H4.24727C4.13477 5.0344 4.02227 4.95002 4.02227 4.8094V3.96565ZM11.7285 16.2563H6.27227C5.79414 16.2563 5.40039 15.8906 5.37227 15.3844L4.95039 6.2719H13.0785L12.6566 15.3844C12.6004 15.8625 12.2066 16.2563 11.7285 16.2563Z"
-                              fill=""
-                            />
-                            <path
-                              d="M9.00039 9.11255C8.66289 9.11255 8.35352 9.3938 8.35352 9.75942V13.3313C8.35352 13.6688 8.63477 13.9782 9.00039 13.9782C9.33789 13.9782 9.64727 13.6969 9.64727 13.3313V9.75942C9.64727 9.3938 9.33789 9.11255 9.00039 9.11255Z"
-                              fill=""
-                            />
-                            <path
-                              d="M11.2502 9.67504C10.8846 9.64692 10.6033 9.90004 10.5752 10.2657L10.4064 12.7407C10.3783 13.0782 10.6314 13.3875 10.9971 13.4157C11.0252 13.4157 11.0252 13.4157 11.0533 13.4157C11.3908 13.4157 11.6721 13.1625 11.6721 12.825L11.8408 10.35C11.8408 9.98442 11.5877 9.70317 11.2502 9.67504Z"
-                              fill=""
-                            />
-                            <path
-                              d="M6.72245 9.67504C6.38495 9.70317 6.1037 10.0125 6.13182 10.35L6.3287 12.825C6.35683 13.1625 6.63808 13.4157 6.94745 13.4157C6.97558 13.4157 6.97558 13.4157 7.0037 13.4157C7.3412 13.3875 7.62245 13.0782 7.59433 12.7407L7.39745 10.2657C7.39745 9.90004 7.08808 9.64692 6.72245 9.67504Z"
-                              fill=""
-                            />
-                          </svg>
-                        </button>
-
-                        {/* Download/Export Button */}
-                        <button 
-                          className="hover:text-primary"
-                          title="Export Department Data"
-                        >
-                          <svg
-                            className="fill-current"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 18 18"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M16.8754 11.6719C16.5379 11.6719 16.2285 11.9531 16.2285 12.3187V14.8219C16.2285 15.075 16.0316 15.2719 15.7785 15.2719H2.22227C1.96914 15.2719 1.77227 15.075 1.77227 14.8219V12.3187C1.77227 11.9812 1.49102 11.6719 1.12539 11.6719C0.759766 11.6719 0.478516 11.9531 0.478516 12.3187V14.8219C0.478516 15.7781 1.23789 16.5375 2.19414 16.5375H15.7785C16.7348 16.5375 17.4941 15.7781 17.4941 14.8219V12.3187C17.5223 11.9531 17.2129 11.6719 16.8754 11.6719Z"
-                              fill=""
-                            />
-                            <path
-                              d="M8.55074 12.3469C8.66324 12.4594 8.83199 12.5156 9.00074 12.5156C9.16949 12.5156 9.31012 12.4594 9.45074 12.3469L13.4726 8.43752C13.7257 8.1844 13.7257 7.79065 13.5007 7.53752C13.2476 7.2844 12.8539 7.2844 12.6007 7.5094L9.64762 10.4063V2.1094C9.64762 1.7719 9.36637 1.46252 9.00074 1.46252C8.66324 1.46252 8.35387 1.74377 8.35387 2.1094V10.4063L5.40074 7.53752C5.14762 7.2844 4.75387 7.31252 4.50074 7.53752C4.24762 7.79065 4.27574 8.1844 4.50074 8.43752L8.55074 12.3469Z"
-                              fill=""
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      {/* Show message if department has no categories */}
+                      {isExpanded && departmentCategories?.length === 0 && (
+                        <tr className="bg-gray-25 dark:bg-gray-750">
+                          <td colSpan={5} className="border-b border-[#eee] py-4 px-4 pl-16 dark:border-strokedark xl:pl-20 text-center">
+                            <div className="text-gray-500 dark:text-gray-400">
+                              <p className="text-sm">No categories in this department</p>
+                              <button
+                                onClick={() => handleCreateCategory(department.id)}
+                                className="text-blue-600 hover:text-blue-800 text-sm mt-1 underline"
+                              >
+                                Add your first category
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })
               ) : (
                 <tr>
-                  <td colSpan={4} className="border-b border-[#eee] py-8 px-4 dark:border-strokedark text-center">
+                  <td colSpan={5} className="border-b border-[#eee] py-8 px-4 dark:border-strokedark text-center">
                     <div className="text-gray-500 dark:text-gray-400">
                       <p className="text-lg mb-2">No departments found</p>
                       <p className="text-sm">Click the "Create Department" button to add your first department.</p>
@@ -229,12 +321,19 @@ const DepartmentTable = observer(({ departments }: DepartmentTableProps) => {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modals */}
       <DepartmentFormModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        mode={modalMode}
+        isOpen={isDeptModalOpen}
+        onClose={() => setIsDeptModalOpen(false)}
+        mode={deptModalMode}
         department={selectedDepartment}
+      />
+
+      <CategoryFormModal
+        isOpen={isCatModalOpen}
+        onClose={() => setIsCatModalOpen(false)}
+        mode={catModalMode}
+        category={selectedCategory}
       />
     </>
   );
