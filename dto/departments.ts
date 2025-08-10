@@ -3,6 +3,12 @@ export interface CreatePayload {
     slug: string;
   }
 
+
+  export interface UpdatePayload {
+    id:number;
+    name: string;
+    slug: string;
+  }
   export interface DepartmentResponse {
     id: number;
     created_at: string;       

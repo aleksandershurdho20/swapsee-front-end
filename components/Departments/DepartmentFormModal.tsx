@@ -16,7 +16,7 @@ const DepartmentFormModal: React.FC<DepartmentFormModalProps> = observer(({
   department,
   mode
 }) => {
-  const { formData, setFormData, createDepartment,  loading } = departmentStore;
+  const { formData, setFormData, createDepartment, updateDepartment, loading } = departmentStore;
 
   useEffect(() => {
     if (isOpen) {
@@ -39,7 +39,7 @@ const DepartmentFormModal: React.FC<DepartmentFormModalProps> = observer(({
     try {
       if (mode === 'edit' && department) {
         //TODO
-        // await updateDepartment(department.id);
+        await updateDepartment(department.id);
       } else {
         await createDepartment();
       }

@@ -83,25 +83,25 @@ const DepartmentTable = observer(({ departments }: DepartmentTableProps) => {
             <tbody>
               {departments.length > 0 ? (
                 departments.map((department, key) => (
-                  <tr key={department.id || key}>
+                  <tr key={department?.id || key}>
                     <td className="border-b border-[#eee] py-5 px-4 pl-9 dark:border-strokedark xl:pl-11">
                       <h5 className="font-medium text-black dark:text-white">
-                        {department.name}
+                        {department?.name}
                       </h5>
-                      <p className="text-sm">{department.meta_title || 'No meta title'}</p>
+                      <p className="text-sm">{department?.meta_title || 'No meta title'}</p>
                     </td>
                     <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
-                      <p className="text-black dark:text-white">{department.slug}</p>
+                      <p className="text-black dark:text-white">{department?.slug}</p>
                     </td>
                     <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                       <p
                         className={`inline-flex rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium ${
-                          department.active === 1
+                          department?.active === 1
                             ? "text-success bg-success"
                             : "text-danger bg-danger"
                         }`}
                       >
-                        {department.active === 1 ? "Active" : "Inactive"}
+                        {department?.active === 1 ? "Active" : "Inactive"}
                       </p>
                     </td>
                     <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">

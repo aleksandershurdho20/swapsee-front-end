@@ -3,7 +3,7 @@ import api from "@/config/api";
 import { DepartmentService } from "@/services/departments";
 import { toast } from "sonner";
 import type { Department } from "@/types/department";
-import { CreatePayload,  DepartmentResponse } from "@/dto/departments"; 
+import { CreatePayload,   } from "@/dto/departments"; 
 
 class DepartmentStore {
   departments: Department[] = [];
@@ -49,6 +49,47 @@ class DepartmentStore {
 
   resetForm = () => {
     this.formData = { name: "", slug: "" };
+  };
+
+  deleteDepartment = async (id: string | number) => {
+    this.loading = true;
+    try {
+      // await DepartmentService.delete(id);
+      runInAction(() => {
+        this.departments = this.departments.filter(dept => dept.id !== id);
+      });
+      toast.success("Department deleted successfully");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to delete department");
+      throw err;
+    } finally {
+      runInAction(() => {
+        this.loading = false;
+      });
+    }
+  };
+
+  updateDepartment = async (id: string | number) => {
+    this.loading = true;
+    try {
+      const res = await DepartmentService.update(id, this.formData);
+      runInAction(() => {
+        const index = this.departments.findIndex(dept => dept.id === id);
+
+        if (index !== -1) {
+          this.departments[index] = res.department as Department;
+        }
+        this.resetForm();
+      });
+      toast.success("Department updated successfully");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to update department");
+      throw err;
+    } finally {
+      runInAction(() => {
+        this.loading = false;
+      });
+    }
   };
 }
 
