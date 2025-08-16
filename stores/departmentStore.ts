@@ -37,8 +37,9 @@ class DepartmentStore {
   createDepartment = async () => {
     try {
       const res = await DepartmentService.create(this.formData);
+
       runInAction(() => {
-        this.departments.push(res.data as Department);
+        this.departments.push(res.department as Department);
         this.formData = { name: "", slug: "" };
       });
       toast.success("Department created successfully");
