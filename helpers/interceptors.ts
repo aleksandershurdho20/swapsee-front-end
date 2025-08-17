@@ -30,7 +30,8 @@ export const interceptorRequest = async (config: InternalAxiosRequestConfig): Pr
   export const interceptorResponse = {
     onFulfilled: (response: AxiosResponse): AxiosResponse => response,
     onRejected: async (error: AxiosError): Promise<AxiosResponse | PromiseRejectedResult> => {
-      if (error.response?.status === 419) {
+      const {response:{status}}= error;
+      if (status === 419) {
         try {
           await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/sanctum/csrf-cookie`, {
             withCredentials: true
@@ -55,6 +56,10 @@ export const interceptorRequest = async (config: InternalAxiosRequestConfig): Pr
         } catch (refreshError) {
           return Promise.reject(refreshError);
         }
+      }
+
+      if(status === 403 || status === 401){
+        window.location.href = '/';
       }
       
       return Promise.reject(error);

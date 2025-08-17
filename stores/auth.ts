@@ -1,3 +1,4 @@
+import api from "@/config/api";
 import { makeAutoObservable } from "mobx";
 
 class Auth {
@@ -6,6 +7,8 @@ class Auth {
   name = "";
   errorMessage: { [key: string]: string } = {};
   disableButton = false;
+
+  user: { [key: string]: string } = {};
 
   constructor() {
     makeAutoObservable(this);
@@ -29,6 +32,16 @@ class Auth {
     this.disableButton = false;
   };
 
+  fetchUser = async () => {
+    try {
+      const res = await api.get("/user");
+      this.user = res.data;
+    } catch (error) {
+      console.error("Failed to fetch user", error);
+      this.user = {};
+    }
+  };
+  
 
 }
 
