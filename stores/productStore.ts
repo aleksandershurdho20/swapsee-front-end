@@ -2,8 +2,7 @@ import { makeAutoObservable, runInAction } from "mobx";
 import api from "@/config/api";
 import { ProductService } from "@/services/products";
 import { toast } from "sonner";
-import type { Product } from "@/types/product";
-import type { CreateProductPayload } from "@/dto/products";
+import type { CreateProductPayload, Product } from "@/dto/products";
 
 class ProductStore {
   products: Product[] = [];
@@ -58,7 +57,7 @@ class ProductStore {
       const res = await ProductService.create(payload);
 
       runInAction(() => {
-        this.products.push(res.product as Product);
+        this.products.push(res as Product);
         this.resetForm();
       });
       toast.success("Product created successfully");
@@ -67,7 +66,7 @@ class ProductStore {
     }
   };
 
-  updateProduct = async (id: string | number, userId: number) => {
+  updateProduct = async (id: string | number) => {
     this.loading = true;
     try {
      
@@ -77,7 +76,7 @@ class ProductStore {
         const index = this.products.findIndex((p) => p.id === id);
 
         if (index !== -1) {
-          this.products[index] = res.product as Product;
+          this.products[index] = res as Product;
         }
         this.resetForm();
       });
