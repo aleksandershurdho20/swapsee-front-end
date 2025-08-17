@@ -21,5 +21,11 @@ export const ProductService = {
     return response.data.data;
   },
 
+  async delete(id: string | number, payload: Product): Promise<Product> {
+    const response = await api.delete<Product>(`/products/${id}`, payload);
+    return response.data.data;
+  },
+
+
 
 };
