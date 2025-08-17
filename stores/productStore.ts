@@ -14,7 +14,7 @@ class ProductStore {
     category_id: 0,
     department_id: 0,
     price: 0,
-    status: "", 
+    status: "published", 
     quantity: null,
     created_by: 0,
     updated_by: 0, 
@@ -34,7 +34,7 @@ class ProductStore {
   fetchProducts = async () => {
     this.loading = true;
     try {
-      const res = await api.get<Product[]>("/products");
+      const res = await ProductService.getAll()
       runInAction(() => {
         this.products = res.data;
       });
@@ -54,6 +54,7 @@ class ProductStore {
         slug: this.generateSlug(this.formData.name),
       };
 
+   
       const res = await ProductService.create(payload);
 
       runInAction(() => {

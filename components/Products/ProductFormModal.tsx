@@ -21,7 +21,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = observer(({
   
 }) => {
   const { formData, setFormData, createProduct, updateProduct, loading } = productStore;
-const {user}= authStore
   // Fetch departments and categories when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -51,7 +50,6 @@ const {user}= authStore
     } else {
       setFormData(name as keyof typeof formData, value);
     }
-    console.log(value,"vl")
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

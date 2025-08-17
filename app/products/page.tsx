@@ -10,12 +10,16 @@ interface ProductTableProps {
   products: Product[];
 }
 
-const ProductTable = observer(({ products }: ProductTableProps) => {
+const ProductTable = observer(() => {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>();
+  const  {products,fetchProducts} = productStore
 
+  useEffect(()=>{
+    fetchProducts();
+  },[])
   // Handlers
   const handleCreate = () => {
     setModalMode("create");
@@ -92,31 +96,31 @@ const ProductTable = observer(({ products }: ProductTableProps) => {
               {products?.length > 0 ? (
                 products?.map((product) => (
                   <tr
-                    key={product.id}
+                    key={product?.id}
                     className="bg-gray-50 dark:bg-gray-800"
                   >
                     <td className="border-b border-[#eee] py-5 px-4 pl-9 dark:border-strokedark xl:pl-11">
                       <h5 className="font-medium text-black dark:text-white">
-                        {product.name}
+                        {product?.name}
                       </h5>
                       <p className="text-sm text-gray-500">
-                        {product.description || "No description"}
+                        {product?.description || "No description"}
                       </p>
                     </td>
                     <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                       <p className="text-black dark:text-white">
-                        ${product.price.toFixed(2)}
+                        {product?.price}
                       </p>
                     </td>
                     <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                       <p
                         className={`inline-flex rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium ${
-                          product.active
+                          product?.active
                             ? "text-success bg-success"
                             : "text-danger bg-danger"
                         }`}
                       >
-                        {product.active ? "Active" : "Inactive"}
+                        {product?.active ? "Active" : "Inactive"}
                       </p>
                     </td>
                     <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
